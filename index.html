@@ -3,29 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Good Day</title>
+    <title>Day Tracker</title>
     <style>
         :root { 
-            /* Dynamic HSL variables */
             --bg-h: 222; --bg-s: 10%; --bg-l: 5%;
             --acc-h: 161; --acc-s: 10%; --acc-l: 20%;
-            
             --bg: hsl(var(--bg-h), var(--bg-s), var(--bg-l));
             --card: #1e293b; 
             --accent: hsl(var(--acc-h), var(--acc-s), var(--acc-l));
             --text: #f8fafc; --dim: #64748b; 
         }
         body { background: var(--bg); color: var(--text); font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; min-height: 100vh; transition: all 0.5s ease; }
-        h1 { color: var(--accent); font-weight: 300; letter-spacing: 2px; text-transform: uppercase; margin: 20px 0; }
+        h1 { color: var(--accent); font-weight: 300; letter-spacing: 2px; text-transform: uppercase; margin: 20px 0; transition: color 0.5s; }
         
         .entry-box { background: var(--card); padding: 30px; border-radius: 24px; text-align: center; width: 100%; max-width: 340px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box; }
         .question { font-size: 1.1rem; color: var(--dim); margin-bottom: 10px; display: block; }
         
-        .score-display { font-size: 4rem; font-weight: bold; color: var(--accent); }
+        .score-display { font-size: 4rem; font-weight: bold; color: var(--accent); transition: color 0.5s; }
         #status { font-size: 0.8rem; color: var(--dim); height: 20px; margin-top: -10px; margin-bottom: 10px; }
 
         .slider { -webkit-appearance: none; width: 100%; height: 12px; border-radius: 6px; background: #334155; outline: none; margin: 30px 0; }
-        .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 32px; height: 32px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 4px solid var(--bg); }
+        .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 32px; height: 32px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 4px solid var(--bg); transition: background 0.5s; }
         
         .calendar-container { width: 100%; max-width: 340px; margin-top: 30px; background: var(--card); padding: 15px; border-radius: 20px; box-sizing: border-box; }
         .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
@@ -38,7 +36,7 @@
 </head>
 <body>
 
-    <h1>Good Day</h1>
+    <h1 id="mainTitle">Good Day</h1>
 
     <div class="entry-box">
         <span class="question">How is it going?</span>
@@ -50,83 +48,4 @@
     <div class="calendar-container">
         <div class="grid" id="calendarGrid">
             <div class="day-label">S</div><div class="day-label">M</div><div class="day-label">T</div>
-            <div class="day-label">W</div><div class="day-label">T</div><div class="day-label">F</div><div class="day-label">S</div>
-        </div>
-    </div>
-
-    <script>
-        const getDateKey = () => new Date().toLocaleDateString('en-CA');
-        const slider = document.getElementById('scoreSlider');
-        const display = document.getElementById('scoreDisplay');
-        const status = document.getElementById('status');
-        let moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || {};
-        const today = getDateKey();
-
-        function updateColors(val) {
-            // Background: Moves from black (0) to rich navy (10)
-            const bgS = 5 + (val * 4); // Saturation 5% to 45%
-            const bgL = 2 + (val * 1.5); // Lightness 2% to 17%
-            document.documentElement.style.setProperty('--bg-s', `${bgS}%`);
-            document.documentElement.style.setProperty('--bg-l', `${bgL}%`);
-
-            // Accent: Moves from gloomy gray-blue (0) to vibrant green (10)
-            const accH = 161; // Fixed green hue, but we'll desaturate it
-            const accS = 5 + (val * 9); // Saturation 5% to 95%
-            const accL = 15 + (val * 4); // Lightness 15% to 55%
-            document.documentElement.style.setProperty('--acc-s', `${accS}%`);
-            document.documentElement.style.setProperty('--acc-l', `${accL}%`);
-        }
-
-        slider.addEventListener('input', () => {
-            const val = slider.value;
-            display.innerText = val;
-            updateColors(val);
-            moodHistory[today] = parseInt(val);
-            localStorage.setItem('moodHistory', JSON.stringify(moodHistory));
-            status.innerText = "Saved";
-            renderCalendar();
-        });
-
-        function renderCalendar() {
-            const grid = document.getElementById('calendarGrid');
-            const labels = grid.querySelectorAll('.day-label');
-            grid.innerHTML = '';
-            labels.forEach(l => grid.appendChild(l));
-
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth();
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-            for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
-
-            for (let d = 1; d <= daysInMonth; d++) {
-                const dayDiv = document.createElement('div');
-                dayDiv.className = 'day';
-                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                const score = moodHistory[dateStr];
-
-                if (dateStr === today) dayDiv.classList.add('today');
-                if (score !== undefined) {
-                    dayDiv.style.background = `hsla(161, ${5 + (score * 8)}%, ${15 + (score * 2)}%, ${score / 15 + 0.15})`;
-                    dayDiv.innerHTML = `<span class="day-num">${d}</span><span class="score-val">${score}</span>`;
-                } else {
-                    dayDiv.innerHTML = `<span class="day-num">${d}</span>`;
-                }
-                grid.appendChild(dayDiv);
-            }
-        }
-
-        // Init load
-        if (moodHistory[today] !== undefined) {
-            slider.value = moodHistory[today];
-            display.innerText = moodHistory[today];
-            updateColors(moodHistory[today]);
-        } else {
-            updateColors(5);
-        }
-        renderCalendar();
-    </script>
-</body>
-</html>
+            <div class="day-label">W</div><div class="day-label">T</div>
